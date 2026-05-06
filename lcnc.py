@@ -1,10 +1,18 @@
+from collections import defaultdict
+import random
+
 import requests
 import json
+
+try:
+    from tqdm import tqdm  # type: ignore
+except ImportError:  # pragma: no cover
+    tqdm = None
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "mistral"
 
-def call_ollama(prompt, temperature=0.0) -> str:
+def call_ollama(prompt, temperature=0.0, response_format=None) -> str:
     payload = {
         "model": MODEL,
         "prompt": prompt,
@@ -14,10 +22,70 @@ def call_ollama(prompt, temperature=0.0) -> str:
         }
     }
 
+    if response_format is not None:
+        payload["format"] = response_format
+
     response = requests.post(OLLAMA_URL, json=payload)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.HTTPError:
+        # Backward compatibility: some Ollama versions/models may reject the `format` field.
+        if response_format is not None and response.status_code == 400:
+            payload.pop("format", None)
+            response = requests.post(OLLAMA_URL, json=payload)
+            response.raise_for_status()
+        else:
+            raise
     
     return response.json()["response"].strip()
+
+
+def parse_first_json(text: str):
+    """Extract and parse the first JSON object/array from LLM output.
+
+    Handles common cases:
+    - leading/trailing commentary
+    - fenced code blocks like ```json ... ```
+    - extra content after the JSON
+    """
+
+    if text is None:
+        raise ValueError("No text to parse")
+
+    cleaned = text.strip()
+    decoder = json.JSONDecoder()
+
+    # Prefer content inside the first fenced code block, if present.
+    if "```" in cleaned:
+        parts = cleaned.split("```")
+        fenced_candidates = []
+        for i in range(1, len(parts), 2):
+            fenced_candidates.append(parts[i])
+
+        # Choose the first fenced block that looks like it contains JSON.
+        for candidate in fenced_candidates:
+            c = candidate.strip()
+            if not c:
+                continue
+            first_line = c.splitlines()[0].strip().lower()
+            if first_line in {"json", "javascript", "js"}:
+                c = "\n".join(c.splitlines()[1:]).strip()
+            if "{" in c or "[" in c:
+                cleaned = c
+                break
+
+    # Find first JSON start char and decode from there.
+    obj_start = None
+    for ch in ("{", "["):
+        pos = cleaned.find(ch)
+        if pos != -1:
+            obj_start = pos if obj_start is None else min(obj_start, pos)
+
+    if obj_start is None:
+        raise ValueError("No JSON object/array start found")
+
+    parsed, _end = decoder.raw_decode(cleaned[obj_start:])
+    return parsed
 
 def extract_prompt_fragments(user_prompt: str) -> list:
     """
@@ -50,7 +118,7 @@ def extract_prompt_fragments(user_prompt: str) -> list:
 
     raw_output = call_ollama(decomposition_prompt, temperature=0.0)
 
-    # czyszczenie (bardzo ważne)
+    # czyszczenie
     fragments = []
     for line in raw_output.split("\n"):
         line = line.strip()
@@ -162,17 +230,15 @@ def generate_architecture(user_prompt: str) -> dict:
     \"\"\"{user_prompt}\"\"\"
     """.format(user_prompt=user_prompt)
 
-    raw_output = call_ollama(architecture_prompt, temperature=0.0)
+    raw_output = call_ollama(architecture_prompt, temperature=0.0, response_format="json")
 
     try:
-        parsed_output = json.loads(raw_output)
-
+        return json.loads(raw_output)
     except json.JSONDecodeError:
-        print("Invalid JSON output:")
-        print(raw_output)
-        return None
-
-    return parsed_output
+        try:
+            return parse_first_json(raw_output)
+        except Exception:
+            return None
 
 def extract_feature_vector(arch: dict) -> dict:
     """
@@ -252,11 +318,60 @@ def shap_feature_attribution_oneout(prompt: str, fragments: list, generate_arch_
 
     return attributions
 
+def shap_sampling_attribution(fragments, generate_arch_fn, samples=10, progress=True):
+    """
+    SHAP-inspired attribution (sampling subsets)
+    """
+
+    contributions = {frag: defaultdict(float) for frag in fragments}
+
+    frag_iter = fragments
+    if progress and tqdm is not None:
+        frag_iter = tqdm(fragments, desc="Attributing fragments", unit="frag")
+
+    for frag in frag_iter:
+        other_frags = [f for f in fragments if f != frag]
+
+        sample_iter = range(samples)
+        if progress and tqdm is not None:
+            sample_iter = tqdm(sample_iter, desc="Sampling subsets", unit="sample", leave=False)
+
+        for _ in sample_iter:
+            subset_size = random.randint(0, len(other_frags))
+            subset = random.sample(other_frags, subset_size)
+
+            prompt_without = " ".join(subset)
+            prompt_with = " ".join(subset + [frag])
+
+            arch_without = generate_arch_fn(prompt_without)
+            arch_with = generate_arch_fn(prompt_with)
+            
+            if arch_without is None or arch_with is None:
+                continue  # pomiń próbki z błędami parsowania
+
+            f_without = extract_feature_vector(arch_without)
+            f_with = extract_feature_vector(arch_with)
+
+            diff = feature_diff(f_with, f_without)
+
+            for k, v in diff.items():
+                contributions[frag][k] += v
+
+        # uśrednianie
+        for k in contributions[frag]:
+            contributions[frag][k] /= samples
+
+    return contributions
+
 
 if __name__ == "__main__":
-    user_prompt = "The system should allow users to register and log in. It must also provide a dashboard for managing their profiles and settings."
+    user_prompt = """
+    The system should allow users to register and log in.
+    It must also provide a dashboard for managing their profiles and settings.
+    Additionally, the application should support offline access and send notifications for important updates.
+    """
 
     fragments = extract_prompt_fragments(user_prompt)
-    attributions = shap_feature_attribution_oneout(user_prompt, fragments, generate_architecture)
+    attributions = shap_sampling_attribution(fragments, generate_architecture, samples=5)
 
     print(json.dumps(attributions, indent=2))
