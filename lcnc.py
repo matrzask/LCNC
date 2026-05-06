@@ -4,7 +4,7 @@ import json
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "mistral"
 
-def call_ollama(prompt, temperature=0.0):
+def call_ollama(prompt, temperature=0.0) -> str:
     payload = {
         "model": MODEL,
         "prompt": prompt,
@@ -19,7 +19,7 @@ def call_ollama(prompt, temperature=0.0):
     
     return response.json()["response"].strip()
 
-def extract_prompt_fragments(user_prompt: str):
+def extract_prompt_fragments(user_prompt: str) -> list:
     """
     Dzieli złożony prompt użytkownika na mniejsze fragmenty,
     z których każdy odpowiada jednej funkcjonalności lub wymaganiu.
@@ -60,7 +60,7 @@ def extract_prompt_fragments(user_prompt: str):
 
     return fragments
 
-def generate_architecture(user_prompt: str):
+def generate_architecture(user_prompt: str) -> dict:
     """
     Generuje strukturę architektury low-code/no-code na podstawie promptu użytkownika,
     zgodnie z ściśle określonymi regułami i formatem JSON.
@@ -174,7 +174,7 @@ def generate_architecture(user_prompt: str):
 
     return parsed_output
 
-def extract_feature_vector(arch: dict):
+def extract_feature_vector(arch: dict) -> dict:
     """
     Zamienia architekturę JSON na płaski feature vector.
     """
@@ -215,13 +215,48 @@ def extract_feature_vector(arch: dict):
 
     return feature_vector
 
+def feature_diff(f1: dict, f2: dict):
+    """
+    Różnica feature’ów: f1 - f2
+    Interpretacja:
+    1 → feature obecny w f1, nieobecny w f2 (dodany przez frag)
+    -1 → feature obecny w f2, nieobecny w f1 (usunięty przez frag)
+    0 → feature obecny w obu lub w żadnym (niezmieniony przez frag)
+    """
+    diff = {}
+    for k in f1:
+        diff[k] = f1[k] - f2.get(k, 0)
+    return diff
+
+def shap_feature_attribution_oneout(prompt: str, fragments: list, generate_arch_fn: callable) -> dict:
+    """
+    SHAP-like attribution: leave-one-out
+    """
+
+    # baseline
+    full_arch = generate_arch_fn(prompt)
+    full_features = extract_feature_vector(full_arch)
+
+    attributions = {}
+
+    for frag in fragments:
+        reduced_fragments = [f for f in fragments if f != frag]
+        reduced_prompt = " ".join(reduced_fragments)
+
+        reduced_arch = generate_arch_fn(reduced_prompt)
+        reduced_features = extract_feature_vector(reduced_arch)
+
+        diff = feature_diff(full_features, reduced_features)
+
+        attributions[frag] = diff
+
+    return attributions
+
 
 if __name__ == "__main__":
     user_prompt = "The system should allow users to register and log in. It must also provide a dashboard for managing their profiles and settings."
-    # fragments = extract_prompt_fragments_ollama(user_prompt)
-    # for i, fragment in enumerate(fragments, 1):
-    #     print(f"Fragment {i}: {fragment}")
-    out = generate_architecture(user_prompt)
-    features = extract_feature_vector(out)
-    print(json.dumps(out, indent=2))
-    print(features)
+
+    fragments = extract_prompt_fragments(user_prompt)
+    attributions = shap_feature_attribution_oneout(user_prompt, fragments, generate_architecture)
+
+    print(json.dumps(attributions, indent=2))
