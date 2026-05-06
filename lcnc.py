@@ -20,6 +20,10 @@ def call_ollama(prompt, temperature=0.0):
     return response.json()["response"].strip()
 
 def extract_prompt_fragments(user_prompt: str):
+    """
+    Dzieli złożony prompt użytkownika na mniejsze fragmenty,
+    z których każdy odpowiada jednej funkcjonalności lub wymaganiu.
+    """
     decomposition_prompt = f"""
     You are a system that extracts requirement fragments from a user prompt.
 
@@ -57,6 +61,11 @@ def extract_prompt_fragments(user_prompt: str):
     return fragments
 
 def generate_architecture(user_prompt: str):
+    """
+    Generuje strukturę architektury low-code/no-code na podstawie promptu użytkownika,
+    zgodnie z ściśle określonymi regułami i formatem JSON.
+    """
+
     architecture_prompt = """
     You are a system that generates a STRUCTURED low-code/no-code application architecture from a user prompt.
 
@@ -165,6 +174,47 @@ def generate_architecture(user_prompt: str):
 
     return parsed_output
 
+def extract_feature_vector(arch: dict):
+    """
+    Zamienia architekturę JSON na płaski feature vector.
+    """
+
+    features = arch.get("features", {})
+    architecture = arch.get("architecture", {})
+    entities = arch.get("entities", [])
+    relationships = arch.get("relationships", [])
+    operations = arch.get("operations", [])
+
+    feature_vector = {
+        # === funkcjonalne ===
+        "has_offline_storage": int(features.get("has_offline_storage", 0)),
+        "has_reminders": int(features.get("has_reminders", 0)),
+        "has_notifications": int(features.get("has_notifications", 0)),
+        "has_authentication": int(features.get("has_authentication", 0)),
+        "has_sharing": int(features.get("has_sharing", 0)),
+        "has_search": int(features.get("has_search", 0)),
+
+        # === strukturalne ===
+        "num_entities": len(entities),
+        "num_relationships": len(relationships),
+        "has_user_entity": int(any(e["name"].lower() == "user" for e in entities)),
+        "has_task_entity": int(any(e["name"].lower() == "task" for e in entities)),
+
+        # === operacyjne ===
+        "has_create": int(any(op["name"] == "create" for op in operations)),
+        "has_read": int(any(op["name"] == "read" for op in operations)),
+        "has_update": int(any(op["name"] == "update" for op in operations)),
+        "has_delete": int(any(op["name"] == "delete" for op in operations)),
+        "has_notify_operation": int(any(op["name"] == "notify" for op in operations)),
+
+        # === architektoniczne ===
+        "uses_local_storage": int(architecture.get("uses_local_storage", 0)),
+        "uses_database": int(architecture.get("uses_database", 0)),
+        "uses_api": int(architecture.get("uses_api", 0)),
+    }
+
+    return feature_vector
+
 
 if __name__ == "__main__":
     user_prompt = "The system should allow users to register and log in. It must also provide a dashboard for managing their profiles and settings."
@@ -172,4 +222,6 @@ if __name__ == "__main__":
     # for i, fragment in enumerate(fragments, 1):
     #     print(f"Fragment {i}: {fragment}")
     out = generate_architecture(user_prompt)
-    print(out)
+    features = extract_feature_vector(out)
+    print(json.dumps(out, indent=2))
+    print(features)
