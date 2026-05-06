@@ -1,0 +1,61 @@
+1.	Zapoznać się z materiałami
+2.	Kolejne zadania nastąpią po pierwszym
+
+
+Projekt dotyczy stworzenia systemu Explainable Low-Code/No-Code (LC/NC) wspieranego przez model językowy, który nie tylko generuje prototyp aplikacji na podstawie promptu użytkownika, ale także wyjaśnia, które fragmenty tego promptu wpłynęły na konkretne cechy aplikacji.
+System działa w kilku krokach: najpierw dekomponuje prompt na fragmenty, następnie generuje strukturę aplikacji (np. encje, operacje, storage), po czym oblicza atrybucję wpływu fragmentów promptu na wybrane feature’y (np. reminders, offline storage) metodą inspirowaną SHAP. Wyniki są prezentowane użytkownikowi w formie wizualnej (graf zależności) oraz tekstowej, co zwiększa przejrzystość działania modelu.
+Celem projektu jest poprawa zrozumienia, zaufania i możliwości iteracyjnego ulepszania promptów w procesie tworzenia aplikacji LC/NC, poprzez powiązanie intencji użytkownika z wygenerowaną funkcjonalnością.
+
+RQ1:
+Czy atrybucja fragmentów promptu do cech aplikacji (prompt-to-feature attribution) poprawia zrozumienie i kontrolę nad generowanymi prototypami LC/NC?
+RQ2:
+Na ile dokładnie metoda atrybucji (SHAP-inspired) identyfikuje fragmenty promptu odpowiedzialne za konkretne feature’y aplikacji?
+RQ3:
+Czy wyjaśnienia oparte na atrybucji pomagają użytkownikom skuteczniej diagnozować i poprawiać prompty (prompt refinement)?
+RQ4:
+Jaki jest kompromis między kosztem obliczeniowym a jakością wyjaśnień w proponowanym podejściu?
+
+Jakie feature’y należy wykorzystać
+Feature’y powinny być:
+•	jednoznaczne (binary lub liczbowe) 
+•	automatycznie wykrywalne z wygenerowanej architektury 
+•	powiązane z fragmentami promptu 
+1. Feature’y funkcjonalne (binary)
+•	has_offline_storage 
+•	has_reminders 
+•	has_notifications 
+•	has_authentication 
+•	has_sharing 
+•	has_search 
+2. Feature’y strukturalne (liczbowe / binary)
+•	num_entities 
+•	num_relationships 
+•	has_user_entity 
+•	has_task_entity 
+3. Feature’y operacyjne
+•	has_create 
+•	has_update 
+•	has_delete 
+•	has_read 
+•	has_notify_operation 
+4. Feature’y architektoniczne
+•	uses_local_storage 
+•	uses_database 
+•	uses_api
+
+Eksperyment 1 – poprawność atrybucji
+•	generowane są atrybucje dla fragmentów promptu 
+•	usuwany jest fragment o najwyższym wpływie oraz fragment losowy 
+•	porównywana jest zmiana feature’ów 
+•	metryka: Feature Drop Rate (top vs random) 
+Eksperyment 2 – użyteczność (refinement)
+•	dwie grupy: bez wyjaśnień vs z wyjaśnieniami 
+•	zadanie: poprawić prompt, aby uzyskać brakujący feature 
+•	metryki: skuteczność, liczba iteracji, czas 
+Eksperyment 3 – koszt vs jakość
+•	różna liczba próbek w SHAP-inspired 
+•	metryki: czas, stabilność wyników, accuracy z eksperymentu 1 
+Eksperyment 4 – stabilność
+•	ten sam prompt uruchamiany wielokrotnie 
+•	metryki: wariancja atrybucji, zgodność rankingów
+
