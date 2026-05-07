@@ -58,17 +58,19 @@ def plot_attribution_graph(attributions, threshold=0.1):
                 G.add_node(feature, bipartite=1)
                 G.add_edge(frag, feature, weight=score)
 
-    pos = nx.spring_layout(G, seed=42)
+    # pos = nx.spring_layout(G, seed=42)
 
     edge_weights = [
         G[u][v]['weight']
         for u, v in G.edges()
     ]
 
-    fig, ax = plt.subplots(figsize=(14, 8))
 
     fragment_nodes = [n for n, d in G.nodes(data=True) if d.get('bipartite') == 0]
     feature_nodes = [n for n, d in G.nodes(data=True) if d.get('bipartite') == 1]
+
+    pos = nx.bipartite_layout(G.to_undirected(), fragment_nodes)
+    fig, ax = plt.subplots(figsize=(10, max(len(fragment_nodes)*2, len(feature_nodes) * 0.75)))
 
     nx.draw_networkx_nodes(
         G,
@@ -93,7 +95,8 @@ def plot_attribution_graph(attributions, threshold=0.1):
     nx.draw_networkx_edges(
         G,
         pos,
-        width=[abs(w) * 3 for w in edge_weights],
+        width=[abs(w) * 4 for w in edge_weights],
+        edge_color=["tab:green" if w > 0 else "tab:red" for w in edge_weights],
         ax=ax,
     )
 
