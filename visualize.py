@@ -184,16 +184,22 @@ def plot_stability(stability_scores):
 if __name__ == "__main__":
     # Load attributions from a file
     import json
+    import os
 
     with open("attributions.json", "r") as f:
         attributions = json.load(f)
     
+    output_dir = "plots"
+    os.makedirs(output_dir, exist_ok=True)
+
     fig1 = plot_attribution_heatmap(attributions)
-    fig1.savefig("attribution_heatmap.png")
+    fig1.savefig(os.path.join(output_dir, "attribution_heatmap.png"))
+
     fig2 = plot_attribution_graph(attributions)
-    fig2.savefig("attribution_graph.png")
+    fig2.savefig(os.path.join(output_dir, "attribution_graph.png"))
+
     fig3 = plot_fragment_importance(attributions)
-    fig3.savefig("fragment_importance.png")
+    fig3.savefig(os.path.join(output_dir, "fragment_importance.png"))
 
     # Added random stability scores for demonstration
     stability_scores = {
@@ -204,4 +210,4 @@ if __name__ == "__main__":
         for frag, feats in attributions.items()
     }
     fig4 = plot_stability(stability_scores)
-    fig4.savefig("stability.png")
+    fig4.savefig(os.path.join(output_dir, "stability.png"))
