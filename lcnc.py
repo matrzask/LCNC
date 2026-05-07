@@ -375,3 +375,6 @@ if __name__ == "__main__":
     attributions = shap_sampling_attribution(fragments, generate_architecture, samples=5)
 
     print(json.dumps(attributions, indent=2))
+
+    with open("attributions.json", "w") as f:
+        json.dump(attributions, f, indent=2)
