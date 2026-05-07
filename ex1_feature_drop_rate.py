@@ -16,6 +16,7 @@ def feature_drop_rate(prompt, fragments, generate_arch_fn, attributions):
 
     top_frag = max(fragments, key=score)
     random_frag = random.choice(fragments)
+    bottom_frag = min(fragments, key=score)
 
     def drop(fragment):
         reduced = " ".join([f for f in fragments if f != fragment])
@@ -28,7 +29,8 @@ def feature_drop_rate(prompt, fragments, generate_arch_fn, attributions):
 
     return {
         "top_fragment": drop(top_frag),
-        "random_fragment": drop(random_frag)
+        "random_fragment": drop(random_frag),
+        "bottom_fragment": drop(bottom_frag),
     }
 
 if __name__ == "__main__":
@@ -42,3 +44,8 @@ if __name__ == "__main__":
     attributions = shap_sampling_attribution(fragments, generate_architecture, samples=5)
     results = feature_drop_rate(user_prompt, fragments, generate_architecture, attributions)
     print(results)
+
+    # save results to a file
+    with open("feature_drop_results.txt", "w") as f:
+        for key, value in results.items():
+            f.write(f"{key}: {value}\n")
