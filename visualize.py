@@ -111,7 +111,7 @@ def plot_attribution_graph(attributions, threshold=0.1):
 
     return fig
 
-def compute_fragment_importance(attributions):
+def _compute_fragment_importance(attributions):
 
     importance = {}
 
@@ -122,7 +122,7 @@ def compute_fragment_importance(attributions):
 
 def plot_fragment_importance(attributions):
 
-    importance = compute_fragment_importance(attributions)
+    importance = _compute_fragment_importance(attributions)
 
     labels = list(importance.keys())
     values = list(importance.values())
