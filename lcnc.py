@@ -171,7 +171,7 @@ def generate_architecture(user_prompt: str) -> dict:
     ],
     "operations": [
         {{
-        "name": "operation_name",
+        "type": "operation_type",
         "entity": "EntityName"
         }}
     ],
@@ -210,12 +210,14 @@ def generate_architecture(user_prompt: str) -> dict:
     ========================================
     OPERATION RULES
     ========================================
-    Include operations ONLY if implied:
+    Include operations ONLY if implied.
+    Operation types should be standardized as:
     - create
     - read
     - update
     - delete
     - notify (only if reminders/notifications exist)
+    Also include the associated entity for each operation.
 
     ========================================
     ENTITY RULES
@@ -267,11 +269,11 @@ def extract_feature_vector(arch: dict) -> dict:
         "has_task_entity": int(any(e["name"].lower() == "task" for e in entities)),
 
         # === operacyjne ===
-        "has_create": int(any(op["name"] == "create" for op in operations)),
-        "has_read": int(any(op["name"] == "read" for op in operations)),
-        "has_update": int(any(op["name"] == "update" for op in operations)),
-        "has_delete": int(any(op["name"] == "delete" for op in operations)),
-        "has_notify_operation": int(any(op["name"] == "notify" for op in operations)),
+        "has_create": int(any(op["type"] == "create" for op in operations)),
+        "has_read": int(any(op["type"] == "read" for op in operations)),
+        "has_update": int(any(op["type"] == "update" for op in operations)),
+        "has_delete": int(any(op["type"] == "delete" for op in operations)),
+        "has_notify_operation": int(any(op["type"] == "notify" for op in operations)),
 
         # === architektoniczne ===
         "uses_local_storage": int(architecture.get("uses_local_storage", 0)),
@@ -367,11 +369,15 @@ def shap_sampling_attribution(fragments, generate_arch_fn, samples=10, progress=
 if __name__ == "__main__":
     user_prompt = """
     The system should allow users to register and log in.
+    Each user will be able to create and manage their own tasks.
     It must also provide a dashboard for managing their profiles and settings.
     Additionally, the application should support offline access and send notifications for important updates.
     """
 
     fragments = extract_prompt_fragments(user_prompt)
+    # arch = generate_architecture(user_prompt)
+    # print("Generated architecture:")
+    # print(json.dumps(arch, indent=2))
     attributions = shap_sampling_attribution(fragments, generate_architecture, samples=5)
 
     print(json.dumps(attributions, indent=2))
