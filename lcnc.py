@@ -320,25 +320,31 @@ def shap_feature_attribution_oneout(prompt: str, fragments: list, generate_arch_
 
     return attributions
 
-def shap_sampling_attribution(fragments, generate_arch_fn, samples=10, progress=True):
+def shap_sampling_attribution(fragments, generate_arch_fn, samples=10, progress=True, progress_callback=None):
     """
     SHAP-inspired attribution (sampling subsets)
     """
 
     contributions = {frag: defaultdict(float) for frag in fragments}
 
+    if samples <= 0:
+        return contributions
+
     frag_iter = fragments
     if progress and tqdm is not None:
         frag_iter = tqdm(fragments, desc="Attributing fragments", unit="frag")
 
-    for frag in frag_iter:
+    total_steps = max(1, len(fragments) * samples)
+    completed_steps = 0
+
+    for frag_index, frag in enumerate(frag_iter, start=1):
         other_frags = [f for f in fragments if f != frag]
 
         sample_iter = range(samples)
         if progress and tqdm is not None:
             sample_iter = tqdm(sample_iter, desc="Sampling subsets", unit="sample", leave=False)
 
-        for _ in sample_iter:
+        for sample_index, _ in enumerate(sample_iter, start=1):
             subset_size = random.randint(0, len(other_frags))
             subset = random.sample(other_frags, subset_size)
 
@@ -359,6 +365,18 @@ def shap_sampling_attribution(fragments, generate_arch_fn, samples=10, progress=
             for k, v in diff.items():
                 contributions[frag][k] += v
 
+            completed_steps += 1
+            if progress_callback is not None:
+                progress_callback(
+                    completed_steps,
+                    total_steps,
+                    frag,
+                    frag_index,
+                    len(fragments),
+                    sample_index,
+                    samples,
+                )
+
         # uśrednianie
         for k in contributions[frag]:
             contributions[frag][k] /= samples
@@ -375,12 +393,15 @@ if __name__ == "__main__":
     """
 
     fragments = extract_prompt_fragments(user_prompt)
-    # arch = generate_architecture(user_prompt)
+    arch = generate_architecture(user_prompt)
     # print("Generated architecture:")
     # print(json.dumps(arch, indent=2))
-    attributions = shap_sampling_attribution(fragments, generate_architecture, samples=5)
+    feature_vector = extract_feature_vector(arch)
+    print("Extracted feature vector:")
+    print(json.dumps(feature_vector, indent=2))
+    # attributions = shap_sampling_attribution(fragments, generate_architecture, samples=5)
 
-    print(json.dumps(attributions, indent=2))
+    # print(json.dumps(attributions, indent=2))
 
-    with open("attributions.json", "w") as f:
-        json.dump(attributions, f, indent=2)
+    # with open("attributions.json", "w") as f:
+    #     json.dump(attributions, f, indent=2)

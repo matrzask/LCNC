@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment 2: Prompt Refinement Studio</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .left-panel h2,
+        .right-panel h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        #promptInput {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        #promptInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* Small action buttons (don't stretch) */
+        #clearHistoryBtn, #clearBtn, #saveHistoryBtn {
+            flex: 0 0 auto;
+            width: auto;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        #analyzeBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #analyzeBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #analyzeBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #clearBtn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        #clearBtn:hover {
+            background: #e0e0e0;
+        }
+
+        .fragments-section {
+            margin-top: 25px;
+        }
+
+        .fragments-list {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .fragment-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .features-section {
+            margin-top: 25px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .feature-item {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-item.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        .feature-item.inactive {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .feature-icon {
+            font-size: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #c62828;
+        }
+
+        .chart-container {
+            width: 100%;
+            min-height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .heatmap-image {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid #e8e8e8;
+            background: #fff;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .slider-row input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            min-width: 42px;
+            text-align: center;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .progress-wrap {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #ececec;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.2s ease;
+        }
+
+        .progress-label {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .history-section {
+            margin-top: 25px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            border: 1px solid #e6e6e6;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .history-item:hover {
+            background: #f2f5ff;
+            border-color: #c7d2fe;
+        }
+
+        .history-item-title {
+            font-size: 13px;
+            line-height: 1.45;
+            color: #222;
+            margin-bottom: 4px;
+        }
+
+        .history-item-meta {
+            font-size: 11px;
+            color: #666;
+        }
+
+        #heatmapChart {
+            width: 100%;
+        }
+
+        #featureChart {
+            width: 100%;
+        }
+
+        .right-panel {
+            position: sticky;
+            top: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .right-panel {
+                position: static;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        .success {
+            background: #e8f5e9;
+            border-left-color: #2e7d32;
+            color: #2e7d32;
+        }
+
+        .json-display {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔬 Experiment 2: Interactive Prompt Refinement</h1>
+            <p class="subtitle">Analyze prompts, visualize attributions, and refine architectures</p>
+        </header>
+
+        <div class="main-layout">
+            <!-- LEFT PANEL: Input & Analysis -->
+            <div class="panel left-panel">
+                <h2>📝 Prompt Analysis</h2>
+
+                <div class="input-section">
+                    <label for="promptInput">Enter Your Prompt:</label>
+                    <textarea id="promptInput" placeholder="Example: Create a task management app with offline support and notifications..."></textarea>
+
+                    <div class="slider-row">
+                        <label for="samplesSlider" style="margin: 0; min-width: 120px;">Samples</label>
+                        <input id="samplesSlider" type="range" min="0" max="20" value="5" step="1" />
+                        <div class="slider-value" id="samplesValue">5</div>
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 6px;">
+                        Set to 0 to disable attribution analysis.
+                    </div>
+
+                    <div class="button-group">
+                        <button id="analyzeBtn">🔍 Analyze</button>
+                        <button id="clearBtn">Clear</button>
+                    </div>
+                </div>
+
+                <div id="errorContainer"></div>
+
+                <!-- Fragments -->
+                <div class="fragments-section" id="fragmentsSection" style="display: none;">
+                    <h3>📌 Extracted Fragments</h3>
+                    <div class="fragments-list" id="fragmentsList"></div>
+                </div>
+
+                <!-- Features -->
+                <div class="features-section" id="featuresSection" style="display: none;">
+                    <h3>✨ Detected Features & Architecture</h3>
+                    <div class="features-grid" id="featuresGrid"></div>
+                </div>
+
+                <div class="history-section">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px">
+                        <h3 style="margin:0">🕘 Prompt History</h3>
+                        <div style="display:flex; gap:8px; align-items:center">
+                            <button id="saveHistoryBtn" style="background:#e8f5e9; color:#2e7d32; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600">Save history</button>
+                            <button id="clearHistoryBtn" style="background:#ffecec; color:#c62828; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600">Clear history</button>
+                        </div>
+                    </div>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+
+                <div id="loadingIndicator" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing prompt...</p>
+                </div>
+
+                <div class="progress-wrap" id="progressWrap">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-label" id="progressLabel">Preparing analysis...</div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Visualizations -->
+            <div class="panel right-panel">
+                <h2>📊 Attribution Analysis</h2>
+
+                <div id="chartContainer" style="display: none;">
+                    <div class="chart-container">
+                        <img id="heatmapImage" class="heatmap-image" alt="Attribution heatmap" />
+                    </div>
+
+                    <h3 style="margin-top: 30px;">📈 Feature Summary</h3>
+                    <div class="chart-container">
+                        <div id="featureChart"></div>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">🏗️ Architecture</h3>
+                    <div class="json-display" id="architectureJson"></div>
+                </div>
+
+                <div class="info-box" id="helpBox">
+                    <strong>💡 How to use:</strong><br>
+                    1. Enter a prompt describing your application<br>
+                    2. Click "Analyze" to extract fragments and compute attributions<br>
+                    3. View the heatmap to see which fragments influence which features<br>
+                    4. Refine your prompt to achieve desired features
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const analyzeBtn = document.getElementById("analyzeBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const promptInput = document.getElementById("promptInput");
+        const samplesSlider = document.getElementById("samplesSlider");
+        const samplesValue = document.getElementById("samplesValue");
+        const errorContainer = document.getElementById("errorContainer");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+        const progressWrap = document.getElementById("progressWrap");
+        const progressFill = document.getElementById("progressFill");
+        const progressLabel = document.getElementById("progressLabel");
+        const fragmentsSection = document.getElementById("fragmentsSection");
+        const featuresSection = document.getElementById("featuresSection");
+        const chartContainer = document.getElementById("chartContainer");
+        const historyList = document.getElementById("historyList");
+        const HISTORY_STORAGE_KEY = "ex2_prompt_history";
+        const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+        const saveHistoryBtn = document.getElementById("saveHistoryBtn");
+
+        analyzeBtn.addEventListener("click", analyzePrompt);
+        clearBtn.addEventListener("click", clearForm);
+        samplesSlider.addEventListener("input", () => {
+            samplesValue.textContent = samplesSlider.value;
+        });
+
+        renderHistory();
+
+        clearHistoryBtn.addEventListener("click", () => {
+            if (!confirm('Clear prompt history? This cannot be undone.')) return;
+            localStorage.removeItem(HISTORY_STORAGE_KEY);
+            renderHistory();
+            showSuccess('Prompt history cleared.');
+        });
+
+        saveHistoryBtn.addEventListener("click", async () => {
+            const history = loadHistory();
+            if (!history.length) {
+                showError('No prompt history to save.');
+                return;
+            }
+
+            let filename = prompt('Filename to save history (optional):', 'prompt_history.json');
+            if (filename === null) return; // user cancelled
+            filename = (filename || 'prompt_history.json').trim();
+
+            try {
+                const resp = await fetch('/api/history/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history, filename }),
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Save failed');
+                showSuccess(`History saved to ${data.path}`);
+            } catch (err) {
+                showError(`Save failed: ${err.message}`);
+            }
+        });
+
+        async function analyzePrompt() {
+            const prompt = promptInput.value.trim();
+            const samples = Number(samplesSlider.value);
+
+            if (!prompt) {
+                showError("Please enter a prompt first!");
+                return;
+            }
+
+            errorContainer.innerHTML = "";
+            loadingIndicator.style.display = "block";
+            progressWrap.style.display = "block";
+            updateProgress(2, "Starting analysis...");
+            fragmentsSection.style.display = "none";
+            featuresSection.style.display = "none";
+            chartContainer.style.display = "none";
+            analyzeBtn.disabled = true;
+
+            let jobId = null;
+            let pollTimer = null;
+
+            try {
+                const response = await fetch("/api/analyze", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ prompt, samples }),
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || "Analysis failed");
+                }
+
+                const startData = await response.json();
+                jobId = startData.job_id;
+                updateProgress(8, "Job started...");
+
+                const data = await pollForJobResult(jobId, (progress, message) => {
+                    updateProgress(progress, message);
+                });
+
+                displayResults(data);
+                updateProgress(100, `Done. Samples: ${data.samples}`);
+                addToHistory(prompt, samples, data.fragments.length);
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                }
+                loadingIndicator.style.display = "none";
+                setTimeout(() => {
+                    progressWrap.style.display = "none";
+                }, 900);
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        async function pollForJobResult(jobId, onProgress) {
+            while (true) {
+                const response = await fetch(`/api/status/${jobId}`);
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || "Unable to fetch job status");
+                }
+
+                const data = await response.json();
+                if (typeof data.progress === "number") {
+                    onProgress(data.progress, data.message || "Analyzing...");
+                }
+
+                if (data.status === "done") {
+                    return data.result;
+                }
+
+                if (data.status === "error") {
+                    throw new Error(data.error || data.message || "Analysis failed");
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+        }
+
+        function displayResults(data) {
+            // Display fragments
+            const fragmentsList = document.getElementById("fragmentsList");
+            fragmentsList.innerHTML = data.fragments
+                .map((frag, idx) => `<div class="fragment-item"><strong>${idx + 1}.</strong> ${frag}</div>`)
+                .join("");
+            fragmentsSection.style.display = "block";
+
+            // Display features
+            displayFeatures(data.feature_vector);
+            featuresSection.style.display = "block";
+
+            // Display visualizations
+            displayCharts(data);
+            chartContainer.style.display = "block";
+
+            // Display architecture JSON
+            displayArchitecture(data.architecture);
+
+            // Show success message
+            const suffix = data.samples === 0 ? " Attribution analysis was disabled." : "";
+            showSuccess(`Successfully analyzed prompt! Found ${data.fragments.length} fragments.${suffix}`);
+        }
+
+        function displayFeatures(featureVector) {
+            const featuresGrid = document.getElementById("featuresGrid");
+            const features = Object.entries(featureVector)
+                .filter(([key, _]) => key.startsWith("has_") || key.startsWith("uses_"))
+                .sort(([_, a], [__, b]) => b - a);
+
+            featuresGrid.innerHTML = features
+                .map(([key, value]) => {
+                    const icon = value === 1 ? "✅" : "❌";
+                    const className = value === 1 ? "active" : "inactive";
+                    const label = key
+                        .replace(/^(has_|uses_)/, "")
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l) => l.toUpperCase());
+                    return `
+                        <div class="feature-item ${className}">
+                            <span class="feature-icon">${icon}</span>
+                            <span>${label}</span>
+                        </div>
+                    `;
+                })
+                .join("");
+        }
+
+        function displayCharts(data) {
+            document.getElementById("heatmapImage").src = `data:image/png;base64,${data.heatmap_image}`;
+
+            // Feature chart
+            Plotly.newPlot(
+                "featureChart",
+                data.feature_chart.data,
+                data.feature_chart.layout,
+                { responsive: true }
+            );
+        }
+
+        function displayArchitecture(architecture) {
+            const json = JSON.stringify(architecture, null, 2);
+            document.getElementById("architectureJson").textContent = json;
+        }
+
+        function clearForm() {
+            promptInput.value = "";
+            samplesSlider.value = "5";
+            samplesValue.textContent = "5";
+            errorContainer.innerHTML = "";
+            fragmentsSection.style.display = "none";
+            featuresSection.style.display = "none";
+            chartContainer.style.display = "none";
+            progressWrap.style.display = "none";
+            updateProgress(0, "Preparing analysis...");
+            promptInput.focus();
+        }
+
+        function updateProgress(value, label) {
+            progressFill.style.width = `${Math.max(0, Math.min(100, value))}%`;
+            if (label) {
+                progressLabel.textContent = label;
+            }
+        }
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+            progressWrap.style.display = "none";
+        }
+
+        function showSuccess(message) {
+            errorContainer.innerHTML = `<div class="info-box success">${message}</div>`;
+        }
+
+        function renderHistory() {
+            const history = loadHistory();
+            if (!history.length) {
+                historyList.innerHTML = '<div class="info-box">No prompts yet. Analyze something to populate history.</div>';
+                return;
+            }
+
+            historyList.innerHTML = history
+                .map((item, index) => {
+                    const preview = escapeHtml(item.prompt.length > 180 ? `${item.prompt.slice(0, 180)}...` : item.prompt);
+                    return `
+                        <div class="history-item" data-index="${index}">
+                            <div class="history-item-title">${preview}</div>
+                            <div class="history-item-meta">${new Date(item.timestamp).toLocaleString()} | samples: ${item.samples} | fragments: ${item.fragments}</div>
+                        </div>
+                    `;
+                })
+                .join("");
+
+            historyList.querySelectorAll(".history-item").forEach((element) => {
+                element.addEventListener("click", () => {
+                    const index = Number(element.getAttribute("data-index"));
+                    const history = loadHistory();
+                    const item = history[index];
+                    if (!item) {
+                        return;
+                    }
+                    promptInput.value = item.prompt;
+                    samplesSlider.value = String(item.samples);
+                    samplesValue.textContent = String(item.samples);
+                    promptInput.focus();
+                });
+            });
+        }
+
+        function addToHistory(prompt, samples, fragments) {
+            const history = loadHistory();
+            const nextHistory = [
+                {
+                    prompt,
+                    samples,
+                    fragments,
+                    timestamp: new Date().toISOString(),
+                },
+                ...history.filter((item) => item.prompt !== prompt || item.samples !== samples),
+            ].slice(0, 10);
+
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(nextHistory));
+            renderHistory();
+        }
+
+        function loadHistory() {
+            try {
+                return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || "[]");
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function escapeHtml(value) {
+            return value
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        // Focus on prompt input on load and sync slider display
+        window.addEventListener("load", () => {
+            // If browser restored the slider value (e.g. after reload), ensure the numeric label matches
+            samplesValue.textContent = samplesSlider.value;
+            promptInput.focus();
+        });
+    </script>
+</body>
+</html>
