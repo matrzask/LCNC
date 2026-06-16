@@ -150,36 +150,100 @@ def plot_stability(stability_scores):
     """
 
     fragments = []
-    means = []
-    stds = []
+    avg_feature_stds = []
+    mean_abs_values = []
 
-    for frag, values in stability_scores.items():
-
-        flat = []
-
-        for feat_scores in values.values():
-            flat.extend(feat_scores)
-
+    for frag, feat_map in stability_scores.items():
+        # Calculate per-feature standard deviations
+        feature_stds = []
+        all_scores = []
+        
+        for feature, scores in feat_map.items():
+            if len(scores) < 2:
+                feature_stds.append(0.0)
+            else:
+                mean = np.mean(scores)
+                std = np.std(scores)
+                feature_stds.append(std)
+            all_scores.extend(scores)
+        
+        # Average per-feature std and mean absolute value
+        avg_feature_std = np.mean(feature_stds) if feature_stds else 0.0
+        mean_abs = np.mean([abs(x) for x in all_scores]) if all_scores else 0.0
+        
         fragments.append(frag)
-        means.append(np.mean(flat))
-        stds.append(np.std(flat))
+        avg_feature_stds.append(avg_feature_std)
+        mean_abs_values.append(mean_abs)
 
     plt.figure(figsize=(10, 5))
 
     plt.errorbar(
         fragments,
-        means,
-        yerr=stds,
+        mean_abs_values,
+        yerr=avg_feature_stds,
         fmt='o'
     )
 
     plt.xticks(rotation=30, ha='right')
-    plt.ylabel("Attribution")
-    plt.title("Attribution Stability")
+    plt.ylabel("Mean |Attribution| ± Avg Per-Feature Std")
+    plt.title("Attribution Stability (per-feature)")
 
     plt.tight_layout()
 
     return plt.gcf()
+
+
+def plot_fragment_feature_stability(fragment_name, feature_scores):
+    """
+    Plot per-feature stability for a single fragment.
+
+    feature_scores:
+    {
+        feature: [scores across runs]
+    }
+    """
+
+    features = []
+    mean_abs_values = []
+    std_values = []
+
+    for feature, scores in feature_scores.items():
+        abs_scores = [abs(x) for x in scores]
+        features.append(feature)
+        mean_abs_values.append(np.mean(abs_scores) if abs_scores else 0.0)
+        std_values.append(np.std(abs_scores) if len(abs_scores) > 1 else 0.0)
+
+    if not features:
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.set_title(f"Feature Stability for: {fragment_name}")
+        ax.text(0.5, 0.5, "No feature scores available", ha="center", va="center")
+        ax.axis("off")
+        return fig
+
+    order = np.argsort(std_values)[::-1]
+    features = [features[i] for i in order]
+    mean_abs_values = [mean_abs_values[i] for i in order]
+    std_values = [std_values[i] for i in order]
+    positions = np.arange(len(features))
+
+    fig, ax = plt.subplots(figsize=(max(10, len(features) * 0.75), 5))
+
+    ax.errorbar(
+        positions,
+        mean_abs_values,
+        yerr=std_values,
+        fmt="o",
+        capsize=4,
+    )
+
+    ax.set_xticks(positions)
+    ax.set_xticklabels(features, rotation=35, ha="right")
+    ax.set_ylabel("Mean |Attribution| ± Std")
+    ax.set_title(f"Per-Feature Stability for Least Stable Fragment\n{fragment_name}")
+
+    plt.tight_layout()
+
+    return fig
 
 if __name__ == "__main__":
     # Load attributions from a file

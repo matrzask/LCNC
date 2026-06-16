@@ -10,10 +10,17 @@ from visualize import plot_stability
 
 
 DEFAULT_PROMPT = """
-The system should allow users to register and log in.
-It must also provide a dashboard for managing their profiles and settings.
-Additionally, the application should support offline access and send notifications for important updates.
-""".strip()
+    The system should allow users to register and log in with secure authentication.
+    Each user will be able to create and manage their own tasks with priorities and deadlines.
+    It must also provide a comprehensive dashboard for managing their profiles, settings, and preferences.
+    Additionally, the application should support offline access and send notifications for important updates.
+    The system should include role-based access control for different user types.
+    Data synchronization across multiple devices should be seamless and automatic.
+    The application must provide a clean and intuitive user interface with dark mode support.
+    All user data should be encrypted and securely stored in the cloud database.
+    The system should allow users to collaborate on shared projects and tasks.
+    Analytics and reporting features should help users track their productivity and progress.
+    """.strip()
 
 
 def run_stability_experiment(
@@ -65,28 +72,42 @@ def _fragment_summary(stability_scores: dict[str, dict[str, list[float]]]):
 
 	summary = []
 	for frag, feat_map in stability_scores.items():
-		flat = [s for scores in feat_map.values() for s in scores]
-		flat_abs = [abs(x) for x in flat]
-		if not flat:
+		# Calculate stability per feature: how much does each feature vary across runs?
+		feature_stds = []
+		for feature, scores in feat_map.items():
+			if len(scores) < 2:
+				feature_stds.append(0.0)
+				continue
+			mean = sum(scores) / len(scores)
+			variance = sum((x - mean) ** 2 for x in scores) / len(scores)
+			std = math.sqrt(variance)
+			feature_stds.append(std)
+		
+		if not feature_stds:
 			summary.append((frag, 0.0, 0.0, 0))
 			continue
-		mean_abs = sum(flat_abs) / len(flat_abs)
-		var_abs = sum((x - mean_abs) ** 2 for x in flat_abs) / len(flat_abs)
-		std_abs = math.sqrt(var_abs)
-		summary.append((frag, mean_abs, std_abs, len(flat_abs)))
+		
+		# Average per-feature stability across all features
+		avg_feature_std = sum(feature_stds) / len(feature_stds)
+		
+		# Also compute mean absolute value across all scores
+		all_scores = [s for scores in feat_map.values() for s in scores]
+		mean_abs = sum(abs(x) for x in all_scores) / len(all_scores)
+		
+		summary.append((frag, mean_abs, avg_feature_std, len(all_scores)))
 
-	# Most unstable first by std_abs, then by mean_abs
+	# Most unstable first by avg_feature_std, then by mean_abs
 	summary.sort(key=lambda t: (t[2], t[1]), reverse=True)
 	return summary
 
 
 def main():
 	parser = argparse.ArgumentParser(description="Stability experiment: repeat the same prompt multiple times")
-	parser.add_argument("--runs", type=int, default=10, help="Number of repetitions")
-	parser.add_argument("--samples", type=int, default=10, help="Subset samples per fragment (SHAP sampling)")
+	parser.add_argument("--runs", type=int, default=8, help="Number of repetitions")
+	parser.add_argument("--samples", type=int, default=8, help="Subset samples per fragment (SHAP sampling)")
 	parser.add_argument("--seed", type=int, default=0, help="Base RNG seed for reproducibility (set -1 for no seed)")
 	parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bars")
-	parser.add_argument("--out", type=str, default="stability.png", help="Output plot path")
+	parser.add_argument("--out", type=str, default="ex4_stability.png", help="Output plot path")
 	parser.add_argument(
 		"--prompt",
 		type=str,
@@ -130,18 +151,22 @@ def main():
 		print("No stability data collected.")
 		return 1
 
-	print("\nTop fragments by instability (std of |attribution| across all features):")
-	for frag, mean_abs, std_abs, n in summary[: min(10, len(summary))]:
-		print(f"- std={std_abs:.4f} | mean_abs={mean_abs:.4f} | n={n} | {frag}")
+	print("\nTop fragments by instability (avg per-feature std across runs):")
+	for frag, mean_abs, avg_feature_std, n in summary[: min(10, len(summary))]:
+		print(f"- std={avg_feature_std:.4f} | mean_abs={mean_abs:.4f} | n={n} | {frag}")
+
+	print("\nAverage instability (avg per-feature std across runs):")
+	avg_std = sum(t[2] for t in summary) / len(summary)
+	print(f"avg_std={avg_std:.4f}")
 
 	# Save JSON
-	with open("stability_scores.json", "w", encoding="utf-8") as f:
+	with open("ex4_stability_scores.json", "w", encoding="utf-8") as f:
 		json.dump(stability_scores, f, indent=2, ensure_ascii=False)
 
 	# Save plot
 	fig = plot_stability(stability_scores)
 	fig.savefig(args.out)
-	print(f"\nSaved: stability scores -> stability_scores.json")
+	print(f"\nSaved: stability scores -> ex4_stability_scores.json")
 	print(f"Saved: stability plot   -> {args.out}")
 
 	return 0

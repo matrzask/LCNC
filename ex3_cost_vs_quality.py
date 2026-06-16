@@ -1,6 +1,7 @@
 import argparse
 import json
 import math
+import os
 import random
 import statistics
 import time
@@ -9,6 +10,8 @@ from collections import defaultdict
 import requests
 
 from lcnc import extract_prompt_fragments, generate_architecture, shap_sampling_attribution
+import ex1_feature_drop_rate
+from visualize import plot_stability
 
 
 DEFAULT_PROMPT = """
@@ -16,6 +19,31 @@ The system should allow users to register and log in.
 It must also provide a dashboard for managing their profiles and settings.
 Additionally, the application should support offline access and send notifications for important updates.
 """.strip()
+
+OUTPUT_DIR = "ex3"
+
+
+def _load_cached_experiment_results(path: str, prompt: str, seed: int | None) -> dict[int, dict]:
+	"""Load cached results keyed by samples when the prompt and seed match."""
+	if not os.path.exists(path):
+		return {}
+	try:
+		with open(path, "r", encoding="utf-8") as f:
+			payload = json.load(f)
+	except Exception:
+		return {}
+
+	if payload.get("prompt") != prompt or payload.get("seed") != seed:
+		return {}
+
+	cached_results: dict[int, dict] = {}
+	for result in payload.get("results", []):
+		if not isinstance(result, dict):
+			continue
+		samples = result.get("samples")
+		if isinstance(samples, int):
+			cached_results[samples] = result
+	return cached_results
 
 
 def _rankdata(values: list[float]) -> list[float]:
@@ -63,6 +91,8 @@ def run_stability_experiment(prompt: str, runs: int, samples: int, seed: int | N
 	stability_scores: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
 	fragments_per_run: list[list[str]] = []
 
+	print(f"progress[samples={samples}]: 0/{runs} runs")
+
 	for run_idx in range(runs):
 		if seed is not None:
 			# Make runs reproducible but different.
@@ -81,6 +111,8 @@ def run_stability_experiment(prompt: str, runs: int, samples: int, seed: int | N
 		for frag, feats in attributions.items():
 			for feature, score in feats.items():
 				stability_scores[frag][feature].append(float(score))
+
+		print(f"progress[samples={samples}]: {run_idx + 1}/{runs} runs")
 
 	# Convert defaultdicts to plain dicts.
 	stability_scores = {
@@ -183,40 +215,79 @@ def plot_experiment3(results: list[dict], out_path: str):
 	fig.savefig(out_path)
 
 
-def main():
-	parser = argparse.ArgumentParser(description="Experiment 3: cost vs quality by varying SHAP-inspired samples")
-	parser.add_argument("--runs", type=int, default=5, help="Repetitions per samples value")
-	parser.add_argument(
-		"--samples-list",
-		type=str,
-		default="1,2,5,10",
-		help="Comma-separated samples values to test (e.g. 1,2,5,10,20)",
-	)
-	parser.add_argument("--seed", type=int, default=0, help="Base RNG seed (set -1 for no seed)")
-	parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bars")
-	parser.add_argument("--out-json", type=str, default="ex3_results.json", help="Output JSON path")
-	parser.add_argument("--out-plot", type=str, default="ex3_cost_vs_quality.png", help="Output plot path")
-	parser.add_argument("--prompt", type=str, default=DEFAULT_PROMPT, help="Prompt text")
-	args = parser.parse_args()
+def plot_feature_drop_rate(results: list[dict], out_path: str):
+	"""Plot feature-drop counts for the top fragment and a random fragment."""
+	try:
+		import matplotlib.pyplot as plt  # type: ignore
+	except Exception:
+		print("WARN: matplotlib not available; skipping feature-drop plot.")
+		return
 
-	runs = max(1, args.runs)
-	seed = None if args.seed == -1 else args.seed
-	progress = not args.no_progress
+	samples = [r["samples"] for r in results]
+	top_drops = []
+	random_drops = []
+	ratios = []
 
-	# Parse samples list.
-	samples_list: list[int] = []
-	for part in args.samples_list.split(","):
-		part = part.strip()
-		if not part:
+	for result in results:
+		feature_drop = result.get("feature_drop") or {}
+		top = feature_drop.get("top_fragment") or (None, 0)
+		random = feature_drop.get("random_fragment") or (None, 0)
+		top_drop = float(top[1] if len(top) > 1 else 0)
+		random_drop = float(random[1] if len(random) > 1 else 0)
+		top_drops.append(top_drop)
+		random_drops.append(random_drop)
+		ratios.append((top_drop / random_drop) if random_drop else float("nan"))
+
+	fig, ax1 = plt.subplots(figsize=(10, 4))
+	ax1.plot(samples, top_drops, marker="o", label="top fragment drop")
+	ax1.plot(samples, random_drops, marker="o", label="random fragment drop")
+	ax1.set_xlabel("samples")
+	ax1.set_ylabel("lost features")
+	ax1.set_title("Feature Drop Rate")
+	ax1.grid(True, alpha=0.3)
+
+	ax2 = ax1.twinx()
+	if any(not math.isnan(v) for v in ratios):
+		ax2.plot(samples, ratios, marker="x", linestyle="--", color="tab:green", label="top/random ratio")
+		ax2.set_ylabel("drop ratio")
+		ax2.set_ylim(bottom=0)
+
+	lines, labels = ax1.get_legend_handles_labels()
+	if any(not math.isnan(v) for v in ratios):
+		lines2, labels2 = ax2.get_legend_handles_labels()
+		lines += lines2
+		labels += labels2
+	ax1.legend(lines, labels, loc="best")
+
+	fig.tight_layout()
+	fig.savefig(out_path)
+
+
+def plot_per_sample_stability(results: list[dict], out_dir: str):
+	"""Save one stability plot per sample value."""
+	os.makedirs(out_dir, exist_ok=True)
+	saved_paths: list[str] = []
+	for result in results:
+		samples = result["samples"]
+		stability_scores = result.get("stability_scores")
+		if not stability_scores:
 			continue
-		try:
-			samples_list.append(max(1, int(part)))
-		except ValueError:
-			raise SystemExit(f"Invalid --samples-list entry: {part!r}")
-	# De-dup and sort.
-	samples_list = sorted(set(samples_list))
-	if not samples_list:
-		raise SystemExit("--samples-list produced an empty list")
+		out_path = os.path.join(out_dir, f"stability_samples_{samples}.png")
+		fig = plot_stability(stability_scores)
+		fig.savefig(out_path)
+		saved_paths.append(out_path)
+	return saved_paths
+
+
+def main():
+	runs = 5
+	seed = 0
+	progress = False
+	prompt = DEFAULT_PROMPT
+	samples_list = [2, 4, 6, 8, 10]
+	os.makedirs(OUTPUT_DIR, exist_ok=True)
+	out_json = os.path.join(OUTPUT_DIR, "ex3_results.json")
+	cached_results = _load_cached_experiment_results(out_json, prompt, seed)
 
 	results: list[dict] = []
 
@@ -225,10 +296,16 @@ def main():
 
 	for samples in samples_list:
 		print(f"\n--- samples={samples} ---")
+		cached_result = cached_results.get(samples)
+		if cached_result is not None:
+			print(f"Reusing cached results from {out_json} for samples={samples}")
+			results.append(cached_result)
+			continue
+
 		t0 = time.perf_counter()
 		try:
 			stability_scores, fragments_per_run = run_stability_experiment(
-				prompt=args.prompt,
+				prompt=prompt,
 				runs=runs,
 				samples=samples,
 				seed=seed,
@@ -247,6 +324,16 @@ def main():
 
 		stability = compute_stability_metrics(stability_scores, runs=runs)
 
+		# Also run Experiment 1 (feature drop rate) for the first run's fragments
+		feature_drop_result = None
+		try:
+			if fragments_per_run:
+				frags = fragments_per_run[0]
+				attributions_run0 = shap_sampling_attribution(frags, generate_architecture, samples=samples, progress=progress)
+				feature_drop_result = ex1_feature_drop_rate.feature_drop_rate(prompt, frags, generate_architecture, attributions_run0)
+		except Exception:
+			feature_drop_result = None
+
 		elapsed = t1 - t0
 		result = {
 			"samples": samples,
@@ -257,6 +344,8 @@ def main():
 			"fragment_extraction_unique_sets": int(fragment_extraction_unique_sets),
 			"n_fragments_run0": int(len(fragments_per_run[0])) if fragments_per_run else 0,
 			"stability": stability,
+			"feature_drop": feature_drop_result,
+			"stability_scores": stability_scores,
 		}
 		results.append(result)
 
@@ -273,17 +362,25 @@ def main():
 
 	# Save JSON
 	payload = {
-		"prompt": args.prompt,
+		"prompt": prompt,
 		"seed": seed,
 		"results": results,
 	}
-	with open(args.out_json, "w", encoding="utf-8") as f:
+	with open(out_json, "w", encoding="utf-8") as f:
 		json.dump(payload, f, indent=2, ensure_ascii=False)
-	print(f"\nSaved: {args.out_json}")
+	print(f"\nSaved: {out_json}")
 
-	# Save plot
-	plot_experiment3(results, args.out_plot)
-	print(f"Saved: {args.out_plot}")
+	# Save plots
+	out_plot = os.path.join(OUTPUT_DIR, "ex3_cost_vs_quality.png")
+	plot_experiment3(results, out_plot)
+	print(f"Saved: {out_plot}")
+
+	feature_drop_plot = os.path.join(OUTPUT_DIR, "ex3_feature_drop_rate.png")
+	plot_feature_drop_rate(results, feature_drop_plot)
+	print(f"Saved: {feature_drop_plot}")
+
+	for path in plot_per_sample_stability(results, OUTPUT_DIR):
+		print(f"Saved: {path}")
 
 	return 0
 
