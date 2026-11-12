@@ -1,0 +1,2 @@
+top_fragment: ('Send notifications for important updates', 3)
+random_fragment: ('Role-based access control for different user types', 0)

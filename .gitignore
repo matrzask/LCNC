@@ -1,8 +1,26 @@
-attributions.json
-feature_drop_results.txt
-ex2_results.json
-ex3_cost_vs_quality.png
-ex3_results.json
-stability_scores.json
-stability.png
+# Local Python environments and caches
+.venv/
 __pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Windows Explorer metadata
+desktop.ini
+Thumbs.db
+
+# Scratch output from the retained root-level demos.
+# Keep semester-one snapshots under old/ eligible for version control.
+/attributions.json
+/ex1_feature_drop_results.txt
+/ex1_feature_drop_results2.txt
+/ex1_fragments*.txt
+/ex2_results.json
+/prompt_history*.json
+/ex3_cost_vs_quality.png
+/ex3_results.json
+/ex4_stability*.png
+/ex4_least_stable_fragment.png
+/ex4_stability_scores.json
+/stability_scores.json
+/stability.png
+/plots/*.png

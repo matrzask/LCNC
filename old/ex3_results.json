@@ -1,0 +1,57 @@
+{
+  "prompt": "The system should allow users to register and log in.\nIt must also provide a dashboard for managing their profiles and settings.\nAdditionally, the application should support offline access and send notifications for important updates.",
+  "seed": 0,
+  "results": [
+    {
+      "samples": 1,
+      "runs": 3,
+      "time_seconds_total": 360.9206436999957,
+      "time_seconds_mean_per_run": 120.30688123333191,
+      "fragment_extraction_stable": true,
+      "fragment_extraction_unique_sets": 1,
+      "n_fragments_run0": 5,
+      "stability": {
+        "mean_std_abs": 0.29051142492210114,
+        "mean_std": 0.32206176178861207,
+        "mean_mean_abs": 0.26666666666666666,
+        "pairwise_spearman_importance": -0.43415428675103446,
+        "pairwise_overlap_min": 5,
+        "pairwise_overlap_mean": 5.0
+      }
+    },
+    {
+      "samples": 2,
+      "runs": 3,
+      "time_seconds_total": 715.8469419000321,
+      "time_seconds_mean_per_run": 238.6156473000107,
+      "fragment_extraction_stable": true,
+      "fragment_extraction_unique_sets": 1,
+      "n_fragments_run0": 5,
+      "stability": {
+        "mean_std_abs": 0.19847337563688583,
+        "mean_std": 0.24102249947877666,
+        "mean_mean_abs": 0.2611111111111111,
+        "pairwise_spearman_importance": -0.19740216479148456,
+        "pairwise_overlap_min": 5,
+        "pairwise_overlap_mean": 5.0
+      }
+    },
+    {
+      "samples": 5,
+      "runs": 3,
+      "time_seconds_total": 1793.8071148000308,
+      "time_seconds_mean_per_run": 597.9357049333436,
+      "fragment_extraction_stable": true,
+      "fragment_extraction_unique_sets": 1,
+      "n_fragments_run0": 5,
+      "stability": {
+        "mean_std_abs": 0.11966663691356955,
+        "mean_std": 0.16160937956987775,
+        "mean_mean_abs": 0.20222222222222222,
+        "pairwise_spearman_importance": 0.39999999999999997,
+        "pairwise_overlap_min": 5,
+        "pairwise_overlap_mean": 5.0
+      }
+    }
+  ]
+}

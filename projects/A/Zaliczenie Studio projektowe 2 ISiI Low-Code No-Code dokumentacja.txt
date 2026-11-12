@@ -1,0 +1,60 @@
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Od:    fbibro@student.agh.edu.pl <fbibro@student.agh.edu.pl>
+Do:    Radoslaw Klimek <rklimek@agh.edu.pl>
+Data:  wtorek, 10 lutego 2026, 01:49:55
+Temat: Zaliczenie Studio projektowe 2 ISiI Low-Code/No-Code dokumentacja
+Pliki: <none>
+--====----====----====----====----====----====----====----====----====----===--
+Dzieñ dobry,
+
+w kwestii metody, pozwala ona na pokazanie u¿ytkownikowi jaki wp³yw na 
+wynik ma prompt a konkretniej jakie wagi maj¹ poszczególne jego 
+fragmenty (sekcja attribution scores) i za jakie elementy wygenerowanej 
+architektury odpowiadaj¹ (sekcja prompt contribution graph). Ma to 
+pozwoliæ zrozumieæ czemu dany fragment pojawi³ siê w wyniku.
+W pewnym stopniu metoda ogranicza halucynacje i losowoœæ przez 
+wielokrotne powtarzanie atrybucji i uœrednienie wyniku. Rozrzut w ci¹¿ 
+mo¿na przeanalizowaæ w czêœci SHAP stability distribution (pod tabelami 
+z wartoœciami shap atrybutów jest rozwijane okno gdzie widaæ historyczne 
+wartoœci dla ka¿dej iteracji).
+Poniewa¿ generowany wynik promptu to sformalizowany pseudokod, do³¹czona 
+sekcja Natural language explaination t³umaczy go na opis zrozumia³y dla 
+u¿ytkownika. Opcjonalnie u¿ytkownik mo¿e wykonaæ walidacjê atrybucji, 
+¿eby sprawdziæ jak siê zmieni architektura odpowiedzi bez atrybutu z 
+najwiêksz¹ wag¹ w widoku przed i po. I na koniec opcjonalnie u¿ytkownik 
+mo¿e zmodyfikowaæ prompt z pomoc¹ podpowiedzi do bardziej 
+przewidywalnego wyniku (sekcja refinement loop)
+
+ocena 3/3+ ?
+
+Pozdrawiam,
+Filip Bibro
+
+
+
+W dniu 2026-02-04 21:32, Radoslaw Klimek napisa³(a):
+> Dzieñ dobry,
+> 
+> Szczerze powiedziawszy nie rozumiem jakie wyniki/rezultaty Pan
+> osiagna³, co daje Pana metoda?
+> 
+> Jakiej oceny Pan siê spodziewa?
+> 
+> r.k.
+> 
+> 
+> W wiadomoœci z sobota, 31 stycznia 2026 (23:16:18) napisano:
+> 
+>> Dzieñ dobry,
+>> wysy³am dokumentacjê i plik z kodem i przepraszam za opuŸnienie
+> 
+>> Pozdrawiam,
+>> Filip Bibro
+> 
+> 
+> 
+> --
+> ~~~ Radoslaw Klimek ~~~~~~~~~~~~~
+> http://home.agh.edu.pl/~rklimek/
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

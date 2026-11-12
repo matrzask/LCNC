@@ -1,0 +1,45 @@
+// Goal - get offline storage, authentication, and notifications/reminders. It was hard to get the model to add the has_reminders feature.
+[
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Użytkownik może się rejestrować i logować. System wysyła powiadomienia, w tym przypomnienia o nadchodzących zadaniach w najbliższym czasie. Dane są przechowywane lokalnie.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T13:49:56.200Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Użytkownik może się rejestrować i logować. System wysyła powiadomienia, w tym przypomnienia o nadchodzących zadaniach. Dane są przechowywane lokalnie.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T13:48:13.744Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Użytkownik może się rejestrować i logować. System powinien przypominać użytkownikowi o nadchodzących zadaniach, wysyłając powiadomienie na jego urządzenie. Dane są przechowywane lokalnie.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T13:46:38.475Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Użytkownik może się rejestrować i logować. System powinien wysyłać użytkownikowi przypomnienia o nadchodzących zadaniach, wysyłając powiadomienie na jego urządzenie. Dane są przechowywane lokalnie.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T13:45:28.042Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Użytkownik może się rejestrować i logować. System powinien wysyłać użytkownikowi przypomnienia o nadchodzących zadaniach. Dane są przechowywane lokalnie.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T13:44:31.149Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. System powinien wysyłać użytkownikowi przypomnienia o nadchodzących zadaniach.",
+    "samples": 0,
+    "fragments": 1,
+    "timestamp": "2026-06-16T13:43:15.320Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami.", //Starting prompt - same as the version with attributions
+    "samples": 0,
+    "fragments": 2,
+    "timestamp": "2026-06-16T13:42:26.617Z"
+  }
+]

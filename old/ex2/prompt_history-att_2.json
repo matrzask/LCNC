@@ -1,0 +1,21 @@
+//goal - remove has_authentication while retaining as much functionality as possible.
+[
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami dla użytkowników.\nKażdy użytkownik ma prywatny pulpit z listą zadań, osobistymi ustawieniami i możliwością synchronizacji danych między urządzeniami.\nAplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach.\nJest możliwość udostępniania wybranych zadania innym poprzez eksport.",
+    "samples": 5,
+    "fragments": 4,
+    "timestamp": "2026-06-16T16:23:01.234Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami dla użytkowników. Każdy użytkownik ma prywatny pulpit z listą zadań, osobistymi ustawieniami i możliwością synchronizacji danych między urządzeniami. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Jest możliwość udostępniania wybranych zadania innym poprzez eksport.",
+    "samples": 5,
+    "fragments": 1, // didn't fragment properly, had to retry
+    "timestamp": "2026-06-16T16:12:10.559Z"
+  },
+  { // Starting prompt - same as the version without attributions
+    "prompt": "Stwórz aplikację do zarządzania zadaniami dla użytkowników. Każdy użytkownik ma prywatny pulpit z listą zadań, osobistymi ustawieniami i możliwością synchronizacji danych między urządzeniami. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Użytkownicy mogą udostępniać wybrane zadania współpracownikom.",
+    "samples": 5,
+    "fragments": 5,
+    "timestamp": "2026-06-16T16:07:38.034Z"
+  }
+]

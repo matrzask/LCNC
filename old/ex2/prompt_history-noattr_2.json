@@ -1,0 +1,33 @@
+//goal - remove has_authentication while retaining as much functionality as possible.
+[
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Aplikacja daje możliwość udostępniania zadań dla innych.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T15:04:27.226Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Aplikacja daje możliwość udostępniania zadań.", // has_auth gone, but so is sharing
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T15:03:39.325Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Użytkownicy mogą udostępniać wybrane zadania współpracownikom.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T15:02:48.392Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami dla użytkowników. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Użytkownicy mogą udostępniać wybrane zadania współpracownikom.",
+    "samples": 0,
+    "fragments": 4,
+    "timestamp": "2026-06-16T15:02:08.681Z"
+  },
+  { // Starting prompt - same as the version with attributions
+    "prompt": "Stwórz aplikację do zarządzania zadaniami dla użytkowników. Każdy użytkownik ma prywatny pulpit z listą zadań, osobistymi ustawieniami i możliwością synchronizacji danych między urządzeniami. Aplikacja powinna umożliwiać tworzenie, edytowanie i przypominanie terminów oraz wysyłać powiadomienia o ważnych wydarzeniach. Użytkownicy mogą udostępniać wybrane zadania współpracownikom.",
+    "samples": 0,
+    "fragments": 5,
+    "timestamp": "2026-06-16T15:00:32.941Z"
+  }
+]

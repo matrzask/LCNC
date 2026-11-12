@@ -1,0 +1,33 @@
+// Goal - get offline storage, authentication, and notifications/reminders. It was hard to get the model to add the has_reminders feature.
+[
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Niech użytkownik ma możliwość logowania i rejestracji. Dodatkowo, Powinna wysłać przypomnienie gdy zbliża się czas wykonania zadania. Powinno się to dziać przez wysłanie powiadomienia. Dane powinny być przechowywane lokalnie.",
+    "samples": 4,
+    "fragments": 5,
+    "timestamp": "2026-06-16T14:42:05.457Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Niech użytkownik ma możliwość logowania i rejestracji. Dodatkowo, niech aplikacja wysyła powiadomienia. Powinna przypomnieć gdy zbliża się czas wykonania zadania. Dane powinny być przechowywane lokalnie.",
+    "samples": 4,
+    "fragments": 5,
+    "timestamp": "2026-06-16T14:32:25.579Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Niech użytkownik ma możliwość logowania i rejestracji. Dodatkowo, niech aplikacja wysyła powiadomienia o nadchodzących zadaniach. Dane powinny być przechowywane lokalnie.",
+    "samples": 4,
+    "fragments": 4,
+    "timestamp": "2026-06-16T14:20:47.668Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami. Niech użytkownik ma możliwość logowania i rejestracji. Dodatkowo, niech aplikacja wysyła powiadomienia o nadchodzących zadaniach.", // Attribution gave the first fragment in prompt 1 a "1" to offline storage, which fooled me into thinking it's not needed to mention it in the prompt, but it dissapeared here.
+    "samples": 4,
+    "fragments": 3,
+    "timestamp": "2026-06-16T14:03:13.511Z"
+  },
+  {
+    "prompt": "Stwórz aplikację do zarządzania zadaniami.", //Starting prompt - same as the version without attributions
+    "samples": 4,
+    "fragments": 2,
+    "timestamp": "2026-06-16T13:55:58.055Z"
+  }
+]
