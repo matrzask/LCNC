@@ -5,8 +5,8 @@ from collections import defaultdict
 
 import requests
 
-from lcnc import extract_prompt_fragments, generate_architecture, shap_sampling_attribution
-from visualize import plot_stability
+from old.lcnc import extract_prompt_fragments, generate_architecture, shap_sampling_attribution
+from old.visualize import plot_stability
 
 
 DEFAULT_PROMPT = """

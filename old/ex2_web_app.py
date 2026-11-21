@@ -12,11 +12,11 @@ import plotly
 import plotly.graph_objects as go
 import matplotlib
 
-from visualize import plot_attribution_heatmap
+from old.visualize import plot_attribution_heatmap
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from lcnc import (
+from old.lcnc import (
     extract_prompt_fragments,
     shap_sampling_attribution,
     generate_architecture,

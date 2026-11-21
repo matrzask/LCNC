@@ -1,6 +1,6 @@
 import random
 
-from lcnc import *
+from old.lcnc import *
 
 def feature_drop_rate(prompt, fragments, generate_arch_fn, attributions):
     """

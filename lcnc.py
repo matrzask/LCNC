@@ -1,4 +1,6 @@
 from collections import defaultdict
+import itertools
+import math
 import random
 
 import requests
@@ -11,6 +13,23 @@ except ImportError:  # pragma: no cover
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "mistral"
+
+
+class PromptFragment(str):
+    """Prompt text carrying a stable, per-prompt identity (P1, P2, ...)."""
+
+    def __new__(cls, fragment_id: str, text: str):
+        instance = super().__new__(cls, text)
+        instance.id = fragment_id
+        return instance
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        if isinstance(other, PromptFragment):
+            return self.id == other.id
+        return False
 
 def call_ollama(prompt, temperature=0.0, response_format=None) -> str:
     payload = {
@@ -126,7 +145,15 @@ def extract_prompt_fragments(user_prompt: str) -> list:
         if line:
             fragments.append(line)
 
-    return fragments
+    return [PromptFragment(f"P{i}", text) for i, text in enumerate(fragments, 1)]
+
+
+def _normalise_fragments(fragments):
+    """Accept identified fragments or legacy strings and return stable IDs/text."""
+    return [
+        (getattr(fragment, "id", f"P{i}"), str(fragment))
+        for i, fragment in enumerate(fragments, 1)
+    ]
 
 def generate_architecture(user_prompt: str) -> dict:
     """
@@ -296,92 +323,90 @@ def feature_diff(f1: dict, f2: dict):
         diff[k] = f1[k] - f2.get(k, 0)
     return diff
 
-def shap_feature_attribution_oneout(prompt: str, fragments: list, generate_arch_fn: callable) -> dict:
+def shap_attribution(
+    fragments,
+    generate_fn: callable,
+    evaluate_fn: callable,
+    samples: int | None = None,
+    progress: bool = True,
+    progress_callback=None,
+    seed: int | None = None,
+) -> dict:
+    """Compute Shapley values for any generated domain.
+
+    ``evaluate_fn`` maps a generated result to a numeric {outcome: value} vector.
+    With ``samples=None`` all coalitions are enumerated exactly; otherwise each
+    fragment uses ``samples`` uniformly sized random coalitions. Failed or None
+    generations are excluded from that fragment/outcome's actual denominator.
+    Returned mapping keys are stable fragment IDs (P1, P2, ...).
     """
-    SHAP-like attribution: leave-one-out
-    """
+    identified = _normalise_fragments(fragments)
+    ids = [fragment_id for fragment_id, _ in identified]
+    texts = dict(identified)
+    n = len(ids)
+    if len(set(ids)) != n:
+        raise ValueError("Fragment IDs must be unique")
+    if samples is not None and samples <= 0:
+        raise ValueError("samples must be positive or None for exact enumeration")
 
-    # baseline
-    full_arch = generate_arch_fn(prompt)
-    full_features = extract_feature_vector(full_arch)
+    rng = random.Random(seed)
+    coalition_cache = {}
 
-    attributions = {}
+    def evaluate(coalition):
+        key = frozenset(coalition)
+        if key not in coalition_cache:
+            prompt = " ".join(texts[item] for item in ids if item in key)
+            try:
+                generated = generate_fn(prompt)
+                vector = None if generated is None else evaluate_fn(generated)
+                if vector is not None and not isinstance(vector, dict):
+                    raise TypeError("evaluate_fn must return a dict or None")
+                coalition_cache[key] = vector
+            except Exception:
+                coalition_cache[key] = None
+        return coalition_cache[key]
 
-    for frag in fragments:
-        reduced_fragments = [f for f in fragments if f != frag]
-        reduced_prompt = " ".join(reduced_fragments)
+    contributions = {fragment_id: defaultdict(float) for fragment_id in ids}
+    denominators = {fragment_id: defaultdict(float) for fragment_id in ids}
+    work_total = n * ((2 ** (n - 1)) if samples is None and n else (samples or 0))
+    completed = 0
+    frag_iter = tqdm(ids, desc="Attributing fragments", unit="frag") if progress and tqdm else ids
 
-        reduced_arch = generate_arch_fn(reduced_prompt)
-        reduced_features = extract_feature_vector(reduced_arch)
+    for frag_index, fragment_id in enumerate(frag_iter, 1):
+        others = [item for item in ids if item != fragment_id]
+        if samples is None:
+            subsets = [set(combo) for size in range(n) for combo in itertools.combinations(others, size)]
+            weighted_subsets = [
+                (subset, math.factorial(len(subset)) * math.factorial(n-len(subset)-1) / math.factorial(n))
+                for subset in subsets
+            ]
+        else:
+            weighted_subsets = []
+            for _ in range(samples):
+                size = rng.randint(0, len(others))
+                weighted_subsets.append((set(rng.sample(others, size)), 1.0 / samples))
 
-        diff = feature_diff(full_features, reduced_features)
-
-        attributions[frag] = diff
-
-    return attributions
-
-def shap_sampling_attribution(fragments, generate_arch_fn, samples=10, progress=True, progress_callback=None):
-    """
-    SHAP-inspired attribution (sampling subsets)
-    """
-
-    contributions = {frag: defaultdict(float) for frag in fragments}
-
-    if samples <= 0:
-        return contributions
-
-    frag_iter = fragments
-    if progress and tqdm is not None:
-        frag_iter = tqdm(fragments, desc="Attributing fragments", unit="frag")
-
-    total_steps = max(1, len(fragments) * samples)
-    completed_steps = 0
-
-    for frag_index, frag in enumerate(frag_iter, start=1):
-        other_frags = [f for f in fragments if f != frag]
-
-        sample_iter = range(samples)
-        if progress and tqdm is not None:
-            sample_iter = tqdm(sample_iter, desc="Sampling subsets", unit="sample", leave=False)
-
-        for sample_index, _ in enumerate(sample_iter, start=1):
-            subset_size = random.randint(0, len(other_frags))
-            subset = random.sample(other_frags, subset_size)
-
-            prompt_without = " ".join(subset)
-            prompt_with = " ".join(subset + [frag])
-
-            arch_without = generate_arch_fn(prompt_without)
-            arch_with = generate_arch_fn(prompt_with)
-            
-            if arch_without is None or arch_with is None:
-                continue  # pomiń próbki z błędami parsowania
-
-            f_without = extract_feature_vector(arch_without)
-            f_with = extract_feature_vector(arch_with)
-
-            diff = feature_diff(f_with, f_without)
-
-            for k, v in diff.items():
-                contributions[frag][k] += v
-
-            completed_steps += 1
+        for sample_index, (subset, weight) in enumerate(weighted_subsets, 1):
+            before, after = evaluate(subset), evaluate(subset | {fragment_id})
+            if before is not None and after is not None:
+                for outcome in before.keys() | after.keys():
+                    try:
+                        delta = float(after.get(outcome, 0)) - float(before.get(outcome, 0))
+                    except (TypeError, ValueError):
+                        raise ValueError(f"Outcome {outcome!r} must have numeric values")
+                    contributions[fragment_id][outcome] += delta * weight
+                    denominators[fragment_id][outcome] += weight
+            completed += 1
             if progress_callback is not None:
-                progress_callback(
-                    completed_steps,
-                    total_steps,
-                    frag,
-                    frag_index,
-                    len(fragments),
-                    sample_index,
-                    samples,
-                )
+                progress_callback(completed, work_total, fragment_id, frag_index, n, sample_index, len(weighted_subsets))
 
-        # uśrednianie
-        for k in contributions[frag]:
-            contributions[frag][k] /= samples
-
-    return contributions
+    # Renormalise over successful comparisons only, so failed generations do
+    # not remain in the denominator for either exact or sampled estimates.
+    for fragment_id in ids:
+        for outcome, denominator in denominators[fragment_id].items():
+            if denominator:
+                contributions[fragment_id][outcome] /= denominator
+    return {fragment_id: dict(values) for fragment_id, values in contributions.items()}
 
 
 if __name__ == "__main__":

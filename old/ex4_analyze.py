@@ -4,7 +4,7 @@ from statistics import mean
 
 import numpy as np
 
-from visualize import plot_fragment_feature_stability, plot_stability
+from old.visualize import plot_fragment_feature_stability, plot_stability
 
 
 def _average_ranks_desc(values_by_fragment: dict[str, float]) -> dict[str, float]:

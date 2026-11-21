@@ -16,17 +16,14 @@ eight subsets of three prompt fragments from the same initial repository state.
 | [articles/](articles/) | Professor-provided article and presentation. |
 | [old/](old/) | First-semester experiments, refinement UI, report source, original TODO and result snapshots. See its [archive notes](old/README.md). |
 
-The retained code is still the first-semester implementation. Its generator and
-18-feature extractor describe LC/NC applications; they need domain-specific
-generators and evaluators for the new tasks. The sampled attribution function
-also calls that extractor directly, so it is a starting point rather than a
-domain-independent engine. It does not yet implement exact enumeration of all
-coalitions or resetting an agent's repository state between runs.
-
-Before extending the estimator, review its treatment of failed generations
-(skipped samples still count in the denominator), fragment identity (text is
-used as the key), and coalition ordering (sampled fragments are shuffled and the
-added fragment is appended). These affect interpretation of the new experiments.
+The root [lcnc.py](lcnc.py) now provides a domain-independent Shapley engine:
+pass a generator and an evaluator for the output type. It enumerates every
+coalition by default and supports sampled estimation for larger prompts.
+Extracted fragments carry stable IDs. The first-semester implementation is
+preserved separately in [old/lcnc.py](old/lcnc.py); scripts under `old/` import
+it explicitly, while current code should import the root `lcnc.py`. The old
+agent-system example still needs a runner that resets repository state between
+coalition runs.
 
 The core uses Python and `requests`, with optional `tqdm`; visualization uses
 `numpy`, `pandas`, `matplotlib` and `networkx`. The generator expects Ollama at

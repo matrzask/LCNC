@@ -1,8 +1,10 @@
 # First-semester archive
 
-These files record the LC/NC prompt-to-feature project. Reusable code remains
-in [../lcnc.py](../lcnc.py) and [../visualize.py](../visualize.py); the current
-assignment is [../TODO-Shapley-IO.md](../TODO-Shapley-IO.md).
+These files record the LC/NC prompt-to-feature project. Its original code is
+preserved in [lcnc.py](lcnc.py) and [visualize.py](visualize.py); archived
+scripts import them as `old.lcnc` and `old.visualize`, so they remain isolated
+from the current root implementations. The current assignment is
+[../TODO-Shapley-IO.md](../TODO-Shapley-IO.md).
 
 ## Contents
 

@@ -3,7 +3,7 @@ import json
 import time
 from pprint import pprint
 
-from lcnc import (
+from old.lcnc import (
     extract_prompt_fragments,
     shap_sampling_attribution,
     generate_architecture,
