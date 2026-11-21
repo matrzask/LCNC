@@ -10,25 +10,36 @@ eight subsets of three prompt fragments from the same initial repository state.
 | Path | Purpose |
 | --- | --- |
 | [TODO-Shapley-IO.md](TODO-Shapley-IO.md) | Professor's next steps, preserved unchanged. |
-| [lcnc.py](lcnc.py) | Reusable starting point: Ollama calls, JSON parsing, prompt decomposition, feature differences, leave-one-out and sampled attribution. |
-| [visualize.py](visualize.py) | Reusable attribution heatmaps, dependency graphs, importance and stability plots. |
+| [lcnc.py](lcnc.py) | Shared Ollama/JSON utilities, fragment IDs and generic exact or sampled Shapley attribution. |
+| [prompt_to_feature.py](prompt_to_feature.py) | First-semester LC/NC generator and 18-feature evaluator, now isolated from the shared engine. |
+| [requirements_engineering.py](requirements_engineering.py) | Requirement generation and outcome evaluator. |
+| [architecture_design.py](architecture_design.py) | Component architecture generation and outcome evaluator. |
+| [test_generation.py](test_generation.py) | Test-case generation and outcome evaluator. |
+| [run_domain_experiment.py](run_domain_experiment.py) | CLI pilot runner for all four domains. |
+| [visualize.py](visualize.py) | Attribution heatmaps, dependency graphs, importance and stability plots. |
 | [projects/](projects/) | Professor-provided example projects, documentation, presentations and original submission archives. |
 | [articles/](articles/) | Professor-provided article and presentation. |
 | [old/](old/) | First-semester experiments, refinement UI, report source, original TODO and result snapshots. See its [archive notes](old/README.md). |
 
-The root [lcnc.py](lcnc.py) now provides a domain-independent Shapley engine:
-pass a generator and an evaluator for the output type. It enumerates every
-coalition by default and supports sampled estimation for larger prompts.
-Extracted fragments carry stable IDs. The first-semester implementation is
-preserved separately in [old/lcnc.py](old/lcnc.py); scripts under `old/` import
-it explicitly, while current code should import the root `lcnc.py`. The old
-agent-system example still needs a runner that resets repository state between
-coalition runs.
+The shared engine takes a generator and an evaluator that returns numeric
+outcome scores. It evaluates every coalition by default and supports sampling
+for larger prompts. Run a pilot with `python run_domain_experiment.py
+requirements`; choose `architecture`, `testing`, or `prompt-to-feature` for the
+other domains. `--samples N` enables sampled estimation; omitting it enumerates
+all coalitions. The first-semester implementation remains in
+[old/lcnc.py](old/lcnc.py), and scripts under `old/` explicitly import both
+`old.lcnc` and `old.visualize`.
 
-The core uses Python and `requests`, with optional `tqdm`; visualization uses
-`numpy`, `pandas`, `matplotlib` and `networkx`. The generator expects Ollama at
-`http://localhost:11434` with the `mistral` model. The local virtual environment
-is ignored by Git.
+The three new evaluators use deterministic keyword checks over generated
+structured outputs. Treat their scores as pilot measures: they are easy to
+inspect, but do not replace human validation of semantic correctness. The
+agent-system domain in the TODO is not part of this milestone; it needs a runner
+that restores the same repository state for every prompt coalition.
+
+The generators use Python, `requests`, and Ollama at
+`http://localhost:11434`; the default model is configured in [lcnc.py](lcnc.py).
+Progress bars are optional (`tqdm`). Visualization uses `numpy`, `pandas`,
+`matplotlib` and `networkx`. The local virtual environment is ignored by Git.
 
 ## Cleanup and version control
 
