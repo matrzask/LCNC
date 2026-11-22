@@ -1,0 +1,34 @@
+﻿{
+  "domain": "requirements",
+  "model": "gemma2:2b",
+  "samples_per_fragment": null,
+  "fragments": [
+    {
+      "id": "P1",
+      "text": "Pacjent może umówić wizytę.",
+      "attribution": {
+        "booking_email_requirement": -0.16666666666666666,
+        "appointment_booking_requirement": 0.5,
+        "24_hour_cancellation_rule": 0.0
+      }
+    },
+    {
+      "id": "P2",
+      "text": "Wizytę można odwołać najpóźniej 24 godziny przed terminem.",
+      "attribution": {
+        "booking_email_requirement": -0.6666666666666666,
+        "appointment_booking_requirement": 0.5,
+        "24_hour_cancellation_rule": 1.0
+      }
+    },
+    {
+      "id": "P3",
+      "text": "Po rezerwacji pacjent dostaje e-mail.",
+      "attribution": {
+        "booking_email_requirement": -0.16666666666666666,
+        "appointment_booking_requirement": 0.0,
+        "24_hour_cancellation_rule": 0.0
+      }
+    }
+  ]
+}

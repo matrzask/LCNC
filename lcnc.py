@@ -14,6 +14,7 @@ except ImportError:  # pragma: no cover
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "qwen3.5:4b"
+MAX_PREDICT_TOKENS = 2048
 
 
 class PromptFragment(str):
@@ -36,15 +37,21 @@ def make_fragments(texts):
     return [PromptFragment(f"P{i}", text) for i, text in enumerate(texts, 1)]
 
 
-def call_ollama(prompt, temperature=0.0, response_format=None) -> str:
+def call_ollama(prompt, temperature=0.0, response_format=None, think=False) -> str:
+    """Call Ollama with reasoning disabled by default."""
     payload = {
         "model": MODEL,
         "prompt": prompt,
         "stream": False,
-        "options": {"temperature": temperature},
+        "options": {
+            "temperature": temperature,
+            "num_predict": MAX_PREDICT_TOKENS,
+        },
     }
     if response_format is not None:
         payload["format"] = response_format
+    if think is not None:
+        payload["think"] = think
     response = requests.post(OLLAMA_URL, json=payload, timeout=180)
     try:
         response.raise_for_status()

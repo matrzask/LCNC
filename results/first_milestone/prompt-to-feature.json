@@ -1,0 +1,79 @@
+﻿{
+  "domain": "prompt-to-feature",
+  "model": "gemma2:2b",
+  "samples_per_fragment": null,
+  "fragments": [
+    {
+      "id": "P1",
+      "text": "Users can create and manage tasks.",
+      "attribution": {
+        "has_update": 1.0,
+        "has_notify_operation": 0.5,
+        "has_task_entity": 0.16666666666666666,
+        "has_notifications": 0.0,
+        "has_create": 1.0,
+        "has_offline_storage": -0.3333333333333333,
+        "has_reminders": 0.0,
+        "num_relationships": -0.5,
+        "uses_database": -0.3333333333333333,
+        "has_delete": 1.0,
+        "has_search": -0.6666666666666666,
+        "uses_api": 0.0,
+        "has_read": 1.0,
+        "has_user_entity": -0.5,
+        "uses_local_storage": -0.3333333333333333,
+        "has_sharing": 0.0,
+        "num_entities": -0.3333333333333333,
+        "has_authentication": -0.3333333333333333
+      }
+    },
+    {
+      "id": "P2",
+      "text": "Users can search for tasks.",
+      "attribution": {
+        "has_update": 0.0,
+        "has_notify_operation": -0.5,
+        "has_task_entity": 0.16666666666666666,
+        "has_notifications": 0.0,
+        "has_create": 0.0,
+        "has_offline_storage": 0.16666666666666666,
+        "has_reminders": 0.0,
+        "num_relationships": 0.0,
+        "uses_database": -0.3333333333333333,
+        "has_delete": 0.0,
+        "has_search": -0.16666666666666666,
+        "uses_api": 0.0,
+        "has_read": 0.0,
+        "has_user_entity": -0.5,
+        "uses_local_storage": 0.16666666666666666,
+        "has_sharing": 0.0,
+        "num_entities": -0.3333333333333333,
+        "has_authentication": -0.3333333333333333
+      }
+    },
+    {
+      "id": "P3",
+      "text": "The application supports offline access.",
+      "attribution": {
+        "has_update": 0.0,
+        "has_notify_operation": 0.0,
+        "has_task_entity": -0.3333333333333333,
+        "has_notifications": 0.0,
+        "has_create": 0.0,
+        "has_offline_storage": 0.16666666666666666,
+        "has_reminders": 0.0,
+        "num_relationships": -0.5,
+        "uses_database": -0.3333333333333333,
+        "has_delete": 0.0,
+        "has_search": -0.16666666666666666,
+        "uses_api": 0.0,
+        "has_read": 0.0,
+        "has_user_entity": 0.0,
+        "uses_local_storage": 0.16666666666666666,
+        "has_sharing": 0.0,
+        "num_entities": -0.3333333333333333,
+        "has_authentication": -0.3333333333333333
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+﻿{
+  "domain": "testing",
+  "model": "qwen3.5:4b",
+  "max_predict_tokens": 1024,
+  "thinking_enabled": false,
+  "samples_per_fragment": null,
+  "execution": {
+    "generator_calls": 8,
+    "generated_outputs": 8,
+    "generator_exceptions": 0,
+    "evaluation_calls": 8,
+    "evaluation_exceptions": 0
+  },
+  "fragments": [
+    {
+      "id": "P1",
+      "text": "Rezerwacja zapisuje wizytę.",
+      "attribution": {
+        "booking_persists_appointment": 0.6666666666666666,
+        "cancellation_at_24h_accepted": 0.5,
+        "cancellation_at_23h_rejected": 0.0,
+        "booking_sends_email": 0.3333333333333333
+      }
+    },
+    {
+      "id": "P2",
+      "text": "Odwołanie jest dozwolone do 24 godzin przed wizytą.",
+      "attribution": {
+        "booking_persists_appointment": 0.16666666666666666,
+        "cancellation_at_24h_accepted": 0.5,
+        "cancellation_at_23h_rejected": 0.0,
+        "booking_sends_email": -0.16666666666666666
+      }
+    },
+    {
+      "id": "P3",
+      "text": "Po rezerwacji pacjent dostaje e-mail.",
+      "attribution": {
+        "booking_persists_appointment": 0.16666666666666666,
+        "cancellation_at_24h_accepted": 0.0,
+        "cancellation_at_23h_rejected": 0.0,
+        "booking_sends_email": 0.8333333333333333
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+﻿{
+  "domain": "architecture",
+  "model": "gemma2:2b",
+  "samples_per_fragment": null,
+  "fragments": [
+    {
+      "id": "P1",
+      "text": "System ma obsługiwać 500 równoczesnych użytkowników.",
+      "attribution": {
+        "appointment_email_path": 0.0,
+        "scalability_component": 1.0,
+        "patient_data_encryption": 0.0
+      }
+    },
+    {
+      "id": "P2",
+      "text": "Dane pacjentów muszą być szyfrowane.",
+      "attribution": {
+        "appointment_email_path": 0.0,
+        "scalability_component": 0.0,
+        "patient_data_encryption": 1.0
+      }
+    },
+    {
+      "id": "P3",
+      "text": "Potwierdzenie wizyty jest wysyłane e-mailem.",
+      "attribution": {
+        "appointment_email_path": 1.0,
+        "scalability_component": 0.0,
+        "patient_data_encryption": 0.0
+      }
+    }
+  ]
+}
